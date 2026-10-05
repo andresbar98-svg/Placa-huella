@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14171a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Placa Huella</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2314171a'/%3E%3Crect x='8' y='26' width='48' height='12' fill='%23e5b53c'/%3E%3Cpath d='M8 44h48M8 20h48' stroke='%2398a0a6' stroke-width='3'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#14171a;--panel:#1d2226;--line:#2e353b;--tx:#e9e6df;--mu:#98a0a6;--ac:#e5b53c;--ok:#7fc08a;--bad:#e0776a;--r:10px}
+*{box-sizing:border-box;margin:0}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 110px)}
+body{background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 0 calc(24px + env(safe-area-inset-bottom,0px))}
+h1,h2,h3,.big{font-family:Rockwell,"Roboto Slab","Trebuchet MS",sans-serif}
+#top{position:sticky;top:0;z-index:5;background:#101316;border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+header{padding:12px 16px 6px;display:flex;justify-content:space-between;align-items:center;max-width:760px;margin:auto}
+header h1{font-size:1.25rem;letter-spacing:.2px}
+#sync{font-size:.8rem;color:var(--mu)}
+main{max-width:760px;margin:auto;padding:8px 16px}
+section{display:none}section.on{display:block}
+h2{font-size:1.4rem;margin:12px 0 4px}
+.sub{color:var(--mu);font-size:.9rem;margin-bottom:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+label{display:block;font-size:.85rem;color:var(--mu);margin:10px 0 4px}
+input,select,textarea{width:100%;background:#111417;color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:11px;font:inherit}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:#272e33;color:var(--tx);padding:10px 14px}
+button.p{background:var(--ac);color:#1a1405;border-color:var(--ac);font-weight:700;width:100%;margin-top:14px;padding:12px}
+button.s{padding:6px 10px;font-size:.85rem}
+button.d{color:var(--bad)}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row b{display:block}
+.mu{color:var(--mu);font-size:.85rem}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tag{font-size:.75rem;padding:2px 8px;border-radius:99px;border:1px solid var(--line);margin-left:6px;vertical-align:middle}
+.tag.Pendiente{color:var(--bad);border-color:var(--bad)}.tag.Abonó{color:var(--ac);border-color:var(--ac)}.tag.Paz{color:var(--ok);border-color:var(--ok)}
+.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.big{font-size:2.4rem;line-height:1.1;color:var(--ac)}
+.slab{height:18px;background:var(--ac);border-radius:3px;overflow:hidden;margin:12px 0 6px;display:flex;border:1px solid var(--line)}
+.slab i{display:block;background:repeating-linear-gradient(45deg,#6b7379 0 6px,#575e64 6px 12px)}
+.k3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.k3 div{background:#111417;border-radius:8px;padding:10px 4px}
+.k3 span{display:block;font-size:.75rem;color:var(--mu)}
+.k3 strong{font-size:1.05rem}
+.k4{grid-template-columns:repeat(2,1fr)}
+.rtot{margin-top:14px;padding:14px;border-radius:8px;background:#111417;border:1px solid var(--ac)}
+.rtot .big{font-size:2rem}
+.rtot.neg .big{color:var(--bad)}
+.rcalc{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:10px 12px;border-radius:8px;background:#111417}
+.rcalc b{font-size:1.1rem}
+#rCard h3{margin:0}
+.rhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.ishare{width:40px;height:40px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:var(--ac);flex:none}
+.racts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.racts button{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 6px;font-size:.85rem;line-height:1.2}
+.racts button svg{width:18px;height:18px;flex:none;pointer-events:none}
+.racts .w{background:var(--ac);color:#1a1405;border-color:var(--ac);font-weight:700}
+.ishare svg{width:20px;height:20px;display:block;pointer-events:none}
+.mat{display:grid;grid-template-columns:1fr auto;gap:2px 10px}
+.mat .stock{font-family:Rockwell,"Roboto Slab",serif;font-size:2rem;color:var(--ac);grid-row:span 2;text-align:right}
+nav{display:flex;max-width:760px;margin:auto}
+nav button{flex:1;border:0;background:none;border-radius:0;padding:10px 2px 11px;font-size:.75rem;color:var(--mu)}
+nav button.on{color:var(--ac);box-shadow:inset 0 -3px var(--ac)}
+#login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;z-index:9}
+#login .card{width:100%;max-width:340px}
+#err{color:var(--bad);font-size:.85rem;min-height:1.2em;margin-top:8px}
+.shbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 12px}
+.shlbl{grid-column:1/-1;font-size:.8rem;letter-spacing:.5px;text-transform:uppercase}
+.shbar button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:10px 6px;background:#111417;border:2px solid var(--ac);color:var(--ac);font-weight:700;border-radius:12px;font-size:1rem;line-height:1.2;min-height:76px}
+.shbar button .e{font-size:1.5rem;line-height:1.1}
+.shbar button small{font-weight:400;font-size:.72rem;color:var(--mu)}
+.shbar button.w{background:var(--ac);color:#1a1405}
+.shbar button.w small{color:#4a3a0c}
+.shbar button:active{transform:scale(.97)}
+#voucher{position:fixed;left:-9999px;top:0;width:420px;background:#12181f;color:#e9e6df;padding:24px 26px;font-family:system-ui,sans-serif;border:2px solid #e5b53c;border-top:10px solid #e5b53c}
+#voucher h3{font-family:Rockwell,"Roboto Slab","Trebuchet MS",sans-serif;font-weight:700}
+#voucher .l{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #2e353b;font-size:14px}
+#voucher .t{margin-top:14px;font-size:1.5rem;color:#e5b53c;font-weight:700;text-align:right}
+@media(prefers-reduced-motion:no-preference){section.on{animation:in .2s}}
+@keyframes in{from{opacity:.4}to{opacity:1}}
+</style>
+</head>
+<body>
+
+<div id="login"><div class="card">
+  <h2 style="margin-top:0">Placa Huella</h2>
+  <p class="sub">Ingresa la clave de la comunidad para continuar.</p>
+  <label for="clave">Clave</label>
+  <input id="clave" type="password" autocomplete="current-password">
+  <div id="err" role="alert"></div>
+  <button class="p" id="entrar">Entrar</button>
+</div></div>
+
+<div id="top">
+<header><h1>Placa Huella</h1><span id="sync">Local</span></header>
+<nav>
+  <button data-t="resumen" class="on">Resumen</button>
+  <button data-t="aportes">Aportes</button>
+  <button data-t="entradas">Entradas</button>
+  <button data-t="consumos">Consumo</button>
+  <button data-t="pagos">Maestro</button>
+  <button data-t="rifa">Rifa</button>
+</nav>
+</div>
+
+<main>
+<!-- RESUMEN -->
+<section id="s-resumen" class="on">
+  <h2>Rendición de cuentas</h2><p class="sub">Dinero y materiales de la obra, al día.</p>
+  <div class="shbar" data-t="resumen"></div>
+  <div class="card">
+    <span class="mu">Saldo en caja</span>
+    <div class="big" id="saldo">$0</div>
+    <div class="slab"><i id="barra" style="width:0%"></i></div>
+    <span class="mu" id="barraTxt"></span>
+    <div class="k3 k4" style="margin-top:12px">
+      <div><span>Aportes de familias</span><strong id="tRec">$0</strong></div>
+      <div><span>Ganancia de la rifa</span><strong id="tRifa">$0</strong></div>
+      <div><span>Pagado al maestro</span><strong id="tPag">$0</strong></div>
+      <div><span>Por cobrar</span><strong id="tPend">$0</strong></div>
+    </div>
+  </div>
+  <h2>Inventario de materiales</h2><p class="sub">Recibido menos consumido en obra.</p>
+  <div id="inv"></div>
+  <div class="card"><button class="s" id="exportar">Descargar copia de datos</button> <button class="s" id="importar">Restaurar copia</button><input type="file" id="file" accept=".json" hidden></div>
+</section>
+
+<!-- APORTES -->
+<section id="s-aportes">
+  <h2>Aportes de la comunidad</h2><p class="sub">Mano de obra del maestro, pagada por las familias.</p>
+  <form class="card" id="f-aporte">
+    <label>Nombre del vecino o familia</label><input name="nombre" required>
+    <div class="g2">
+      <div><label>Monto proyectado</label><input name="proy" type="text" inputmode="numeric" data-money value="200.000" required></div>
+      <div><label id="lAbon">Abono</label><input name="abon" type="text" inputmode="numeric" data-money value="0"></div>
+    </div>
+    <label>Fecha del abono</label><input name="fecha" type="date">
+    <div id="prev" style="margin-top:12px;padding:10px;border-radius:8px;background:#111417"></div>
+    <button class="p">Guardar aporte</button>
+    <button type="button" class="s" id="canc" hidden style="width:100%;margin-top:8px">Cancelar</button>
+  </form>
+  <div class="shbar" data-t="aportes"></div>
+  <div class="card" id="l-aportes"></div>
+</section>
+
+<!-- ENTRADAS -->
+<section id="s-entradas">
+  <h2>Materiales recibidos</h2><p class="sub">Donaciones de la Alcaldía y la Federación.</p>
+  <form class="card" id="f-entrada">
+    <label>Fuente</label><select name="fuente"><option>Alcaldía Municipal</option><option>Federación de Cafeteros</option></select>
+    <div class="matf"></div>
+    <label>Fecha</label><input name="fecha" type="date">
+    <button class="p">Registrar entrada</button>
+  </form>
+  <div class="shbar" data-t="entradas"></div>
+  <div class="card" id="l-entradas"></div>
+</section>
+
+<!-- CONSUMO -->
+<section id="s-consumos">
+  <h2>Consumo en obra</h2><p class="sub">Material gastado en cada fundida.</p>
+  <form class="card" id="f-consumo">
+    <div class="matf"></div>
+    <label>Fecha</label><input name="fecha" type="date">
+    <label>Nota (opcional)</label><input name="nota" placeholder="Ej. Fundida tramo 2">
+    <button class="p">Descontar del inventario</button>
+  </form>
+  <div class="shbar" data-t="consumos"></div>
+  <div class="card" id="l-consumos"></div>
+</section>
+
+<!-- MAESTRO -->
+<section id="s-pagos">
+  <h2>Pagos al maestro</h2><p class="sub">Se descuentan del dinero aportado.</p>
+  <form class="card" id="f-pago">
+    <div class="g2">
+      <div><label>Fecha</label><input name="fecha" type="date" required></div>
+      <div><label>Valor pagado</label><input name="valor" type="text" inputmode="numeric" data-money placeholder="0" required></div>
+    </div>
+    <label>Metros lineales o tramo avanzado</label><input name="avance" placeholder="Ej. 6 m, tramo 2" required>
+    <button class="p">Registrar pago</button>
+  </form>
+  <div class="shbar" data-t="pagos"></div>
+  <div class="card" id="l-pagos"></div>
+</section>
+
+<!-- RIFA -->
+<section id="s-rifa">
+  <h2>Rifa comunitaria</h2><p class="sub">La ganancia limpia se suma al saldo en caja cuando guardas la rifa.</p>
+
+  <div class="card" id="rCard"></div>
+  <div class="shbar" data-t="rifa"></div>
+
+  <form class="card" id="f-rifa">
+    <h3 style="margin-bottom:2px">Parámetros</h3>
+    <div class="g2">
+      <div><label for="rPue">Total puestos / boletas</label><input id="rPue" name="puestos" type="text" inputmode="numeric" data-money value="100"></div>
+      <div><label for="rVal">Valor por puesto</label><input id="rVal" name="valor" type="text" inputmode="numeric" data-money value="20.000"></div>
+    </div>
+    <div class="rcalc"><span class="mu">Recaudo total proyectado</span><b id="rRec">$2.000.000</b></div>
+    <label for="rPre">Premio entregado / Valor del premio</label>
+    <input id="rPre" name="premio" type="text" inputmode="numeric" data-money value="500.000">
+    <div class="rtot" id="rTot">
+      <span class="mu">Total para la placa huella</span>
+      <div class="big" id="rNeto">$1.500.000</div>
+      <span class="mu">Recaudo total − Premio</span>
+    </div>
+    <div id="rAviso" class="mu" style="margin-top:8px;color:var(--bad)" hidden>El premio es mayor que el recaudo: la rifa resta de la caja.</div>
+
+    <h3 style="margin:18px 0 2px">Detalles del sorteo</h3>
+    <div class="g2">
+      <div><label for="rFec">Fecha del sorteo</label><input id="rFec" name="fecha" type="date" value="2026-10-30"></div>
+      <div><label for="rLot">Lotería con la que juega</label><input id="rLot" name="loteria" placeholder="Ej. Lotería de Boyacá" list="rLots" autocomplete="off" value="Lotería de Santander"></div>
+    </div>
+    <div class="g2">
+      <div><label for="rLug">Lugar / Proyecto</label><input id="rLug" name="lugar" value="Placa Huella Piedra Parada"></div>
+      <div><label for="rRes">Responsable</label><input id="rRes" name="responsable" value="Marcotulio Martínez"></div>
+    </div>
+    <datalist id="rLots"><option value="Lotería de Santander"><option value="Lotería de Boyacá"><option value="Baloto"></datalist>
+
+    <h3 style="margin:18px 0 2px">Ganador y entrega</h3>
+    <div class="g2">
+      <div><label for="rNum">Número ganador de la Lotería (4 cifras)</label><input id="rNum" name="numero" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="Ej. 4500" autocomplete="off"><span class="mu" id="rBol" style="display:block;margin-top:4px">Se juega con las dos últimas cifras.</span></div>
+      <div><label for="rMed">Medio de pago / Entrega</label><select id="rMed" name="medio"><option value="">Sin definir</option><option>Efectivo</option><option>Nequi</option><option>Daviplata</option><option>Transferencia bancaria</option></select></div>
+    </div>
+    <label for="rGan">Persona / Familia ganadora</label><input id="rGan" name="ganador" placeholder="Ej. María López">
+
+    <button class="p">Guardar rifa</button>
+  </form>
+</section>
+</main>
+
+
+
+<div id="voucher"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+/* ---------- Configuración ---------- */
+const CLAVE='ambv';
+// Para sincronizar entre celulares, pega aquí tu configuración de Firebase (consola > Configuración del proyecto > Tus apps).
+// Con null la app funciona 100% local en este dispositivo.
+const FIREBASE_CONFIG=null; // {apiKey:'',authDomain:'',projectId:'',appId:''}
+
+const MATS={
+  cemento:{n:'Cemento',u:['Bultos','Sacos'],tot:'Bultos de cemento'},
+  hierro:{n:'Hierro / Varilla',u:['Varillas','Unidades'],tot:'Varillas'},
+  arena:{n:'Arena',u:['Viajes','Volquetadas'],tot:'Volquetadas de arena'},
+  triturado:{n:'Triturado',u:['Viajes','Volquetadas'],tot:'Volquetadas de triturado'},
+  otros:{n:'Otros (malla, aditivos, madera…)',u:[]}
+};
+const KEY='placaHuella.v1';
+let S={aportes:[],entradas:[],consumos:[],pagos:[],rifa:{}};
+try{S=Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
+let ref=null;
+
+/* ---------- Utilidades ---------- */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const fmt=n=>String(Math.max(0,Math.round(n||0))).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const num=v=>parseInt(String(v).replace(/\D/g,''),10)||0;
+const money=n=>'$'+fmt(n);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
+const fdate=d=>d?new Date(d+'T12:00').toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'}):'Sin fecha';
+const tagCls=e=>e==='Paz y Salvo'?'Paz':e;
+const edit={};
+const PROY=200000;
+const sum=a=>(a.abonos||[]).reduce((t,x)=>t+x.valor,0);
+const estOf=(t,p)=>t<=0?'Pendiente':(t>=p?'Paz y Salvo':'Abonó');
+function norm(a){
+  if(!a.abonos)a.abonos=a.abon>0?[{id:uid(),fecha:a.fecha||'',valor:a.abon}]:[];
+  a.abon=sum(a);a.estado=estOf(a.abon,a.proy);return a;
+}
+const normAll=()=>S.aportes.forEach(norm);
+const moneyS=n=>(n<0?'-':'')+'$'+fmt(Math.abs(n));
+const RIFA0={puestos:100,valor:20000,premio:500000,fecha:'2026-10-30',loteria:'Lotería de Santander',lugar:'Placa Huella Piedra Parada',responsable:'Marcotulio Martínez',numero:'',ganador:'',medio:'',saved:false};
+function rifaGet(){
+  const r=S.rifa||{};
+  if(r.puestos==null&&((r.recaudo||0)>0||(r.premio||0)>0))   // datos de la versión anterior
+    return {...RIFA0,puestos:1,valor:r.recaudo||0,premio:r.premio||0,saved:true};
+  return {...RIFA0,...r};
+}
+const rifaRec=r=>r.puestos*r.valor;
+const rifaNet=()=>{const r=rifaGet();return r.saved?rifaRec(r)-r.premio:0};
+
+function save(){
+  normAll();
+  localStorage.setItem(KEY,JSON.stringify(S));
+  if(ref)ref.set({d:JSON.stringify(S)}).catch(()=>{});
+  render();
+}
+
+/* ---------- Campos de dinero con separador de miles ---------- */
+document.addEventListener('input',e=>{
+  const el=e.target;if(!el.matches||!el.matches('[data-money]'))return;
+  const pos=el.selectionStart||0;
+  const digitsBefore=el.value.slice(0,pos).replace(/\D/g,'').length;
+  const n=num(el.value);
+  el.value=el.value.replace(/\D/g,'')===''?'':fmt(n);
+  let c=0,i=0;
+  for(;i<el.value.length&&c<digitsBefore;i++)if(/\d/.test(el.value[i]))c++;
+  try{el.setSelectionRange(i,i)}catch(x){}
+});
+document.addEventListener('focusout',e=>{
+  const el=e.target;
+  if(el.matches&&el.matches('[data-money]')&&el.value==='')el.value=el.name==='valor'?'':'0';
+});
+
+/* ---------- Acceso ---------- */
+function entrar(){
+  if($('#clave').value===CLAVE){sessionStorage.setItem('ok','1');$('#login').remove()}
+  else{$('#err').textContent='Clave incorrecta. Inténtalo de nuevo.';$('#clave').select()}
+}
+if(sessionStorage.getItem('ok'))$('#login').remove();
+if($('#entrar')){$('#entrar').onclick=entrar;$('#clave').onkeydown=e=>{if(e.key==='Enter')entrar()}}
+
+/* ---------- Navegación ---------- */
+$$('nav button').forEach(b=>b.onclick=()=>{
+  $$('nav button').forEach(x=>x.classList.toggle('on',x===b));
+  $$('section').forEach(s=>s.classList.toggle('on',s.id==='s-'+b.dataset.t));
+  scrollTo(0,0);
+});
+
+/* ---------- Campos de material (entradas y consumos) ---------- */
+function matFields(box){
+  box.innerHTML=`<label>Material</label>
+  <select name="mat">${Object.entries(MATS).map(([k,v])=>`<option value="${k}">${v.n}</option>`).join('')}</select>
+  <div class="otro" hidden><label>Nombre del material</label><input name="otroN" placeholder="Ej. Malla electrosoldada"></div>
+  <div class="g2"><div><label>Cantidad</label><input name="cant" type="number" min="0" step="any" inputmode="decimal" required></div>
+  <div><label>Unidad</label><select name="unidad"></select><input name="unidadOtra" placeholder="Ej. rollos" hidden></div></div>`;
+  const m=$('[name=mat]',box),u=$('[name=unidad]',box),uo=$('[name=unidadOtra]',box),o=$('.otro',box);
+  const upd=()=>{
+    const otros=m.value==='otros';
+    o.hidden=!otros;uo.hidden=!otros;u.hidden=otros;
+    u.innerHTML=otros?'':MATS[m.value].u.map(x=>`<option>${x}</option>`).join('');
+    uo.required=otros;$('[name=otroN]',box).required=otros;
+  };
+  m.onchange=upd;upd();
+}
+$$('.matf').forEach(matFields);
+
+function readMat(f){
+  const d=Object.fromEntries(new FormData(f));
+  const otros=d.mat==='otros';
+  return {mat:d.mat,nombre:otros?d.otroN.trim():MATS[d.mat].n,unidad:otros?d.unidadOtra.trim():d.unidad,cant:parseFloat(d.cant)||0,fecha:d.fecha||today()};
+}
+const matLabel=r=>`${r.cant} ${esc(r.unidad)} de ${esc(r.nombre)}`;
+
+/* ---------- Formularios ---------- */
+function bindForm(id,list,build,after){
+  const f=$(id);
+  f.onsubmit=e=>{
+    e.preventDefault();
+    const item=build(f);
+    if(edit[list]){const i=S[list].findIndex(x=>x.id===edit[list]);item.id=edit[list];S[list][i]=item;delete edit[list];$('button.p',f).textContent=f.dataset.lbl}
+    else{item.id=uid();S[list].unshift(item)}
+    f.reset();if(after)after(f);save();
+  };
+  f.dataset.lbl=$('button.p',f).textContent;
+}
+bindForm('#f-entrada','entradas',f=>({...readMat(f),fuente:new FormData(f).get('fuente')}),f=>matFields($('.matf',f)));
+bindForm('#f-consumo','consumos',f=>({...readMat(f),nota:new FormData(f).get('nota').trim()}),f=>matFields($('.matf',f)));
+bindForm('#f-pago','pagos',f=>{const d=Object.fromEntries(new FormData(f));return{fecha:d.fecha,valor:num(d.valor),avance:d.avance.trim()}});
+
+// Aportes: abonos acumulados y estado automático
+const fa=$('#f-aporte');
+function prev(){
+  const cur=edit.aportes&&S.aportes.find(r=>r.id===edit.aportes),base=cur?sum(cur):0;
+  const t=base+num(fa.abon.value),p=num(fa.proy.value),e=estOf(t,p);
+  $('#prev').innerHTML=`<span class="tag ${tagCls(e)}" style="margin:0 8px 0 0">${e}</span><b>Falta / Pendiente: ${money(Math.max(0,p-t))}</b>`+(base?`<div class="mu">Ya abonado ${money(base)} · total con este abono ${money(t)}</div>`:'')+(t>p&&p>0?`<div class="mu">Abono mayor a la cuota: se registra completo (${money(t)}).</div>`:'');
+}
+function resetFa(){
+  fa.reset();fa.proy.value=fmt(PROY);fa.abon.value='0';fa.fecha.value=today();
+  delete edit.aportes;$('#lAbon').textContent='Abono';
+  $('button.p',fa).textContent='Guardar aporte';$('#canc').hidden=true;prev();
+}
+['abon','proy'].forEach(n=>fa[n].oninput=prev);
+$('#canc').onclick=resetFa;
+fa.onsubmit=e=>{
+  e.preventDefault();
+  const v=num(fa.abon.value),fecha=fa.fecha.value||today(),nombre=fa.nombre.value.trim(),proy=num(fa.proy.value);
+  const ab=v>0?[{id:uid(),fecha,valor:v}]:[];
+  if(edit.aportes){
+    const a=S.aportes.find(r=>r.id===edit.aportes);
+    a.nombre=nombre;a.proy=proy;a.abonos.push(...ab);
+  }else S.aportes.unshift({id:uid(),nombre,proy,abonos:ab,abon:0,estado:'Pendiente'});
+  resetFa();save();
+};
+resetFa();
+
+/* ---------- Rifa ---------- */
+const fr=$('#f-rifa');
+function rifaPrev(){
+  const rec=num(fr.puestos.value)*num(fr.valor.value),net=rec-num(fr.premio.value);
+  $('#rRec').textContent=money(rec);
+  $('#rNeto').textContent=moneyS(net);
+  $('#rTot').classList.toggle('neg',net<0);
+  $('#rAviso').hidden=net>=0;
+}
+['puestos','valor','premio'].forEach(n=>fr[n].addEventListener('input',rifaPrev));
+fr.numero.addEventListener('input',()=>{
+  const v=fr.numero.value.replace(/\D/g,'').slice(0,4);fr.numero.value=v;
+  $('#rBol').textContent=v.length>=2?'Juega con las dos últimas cifras: '+v.slice(-2):'Se juega con las dos últimas cifras.';
+});
+fr.onsubmit=e=>{
+  e.preventDefault();
+  S.rifa={puestos:num(fr.puestos.value),valor:num(fr.valor.value),premio:num(fr.premio.value),
+    fecha:fr.fecha.value,loteria:fr.loteria.value.trim(),lugar:fr.lugar.value.trim(),responsable:fr.responsable.value.trim(),numero:fr.numero.value.replace(/\D/g,'').slice(0,4),
+    ganador:fr.ganador.value.trim(),medio:fr.medio.value,saved:true};
+  save();
+  const b=$('button.p',fr);b.textContent='¡Guardado!';setTimeout(()=>b.textContent='Guardar rifa',1500);
+  $('#rCard').scrollIntoView({behavior:'smooth',block:'start'});
+};
+function rifaFill(){
+  const r=rifaGet();
+  const row=(l,v)=>`<div class="row"><span class="mu">${l}</span><b style="text-align:right">${v||'<span class="mu">Sin registrar</span>'}</b></div>`;
+  $('#rCard').innerHTML=r.saved?`<div class="rhead"><h3>Resumen de la rifa</h3>
+    </div>
+    <div class="k3 k4"><div><span>Recaudo total</span><strong>${money(rifaRec(r))}</strong></div><div><span>Premio</span><strong>${money(r.premio)}</strong></div></div>
+    <div class="rtot${rifaNet()<0?' neg':''}"><span class="mu">Total para la placa huella</span><div class="big">${moneyS(rifaNet())}</div></div>
+    <div style="margin-top:8px">
+    ${row('Puestos',fmt(r.puestos)+' × '+money(r.valor))}
+    ${row('Fecha del sorteo',r.fecha?fdate(r.fecha):'')}
+    ${row('Lotería',esc(loteriaNom(r)))}
+    ${row('Lugar / Proyecto',esc(r.lugar))}
+    ${row('Responsable',esc(r.responsable))}
+    ${row('Número ganador',r.numero?esc(r.numero)+' (boleta '+boleta(r.numero)+')':'')}
+    ${row('Ganador(a)',esc(r.ganador))}
+    ${row('Pago del premio',esc(r.medio))}</div>
+    <div class="racts" style="grid-template-columns:1fr"><button type="button" class="w" data-a="rifaganador"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg><span>Compartir Ganador(a)</span></button></div>`
+    :`<div class="rhead"><h3>Resumen de la rifa</h3></div><p class="mu">Aún no has guardado la rifa. Completa los datos abajo y toca "Guardar rifa" para sumarla al saldo.</p>`;
+  if(fr.contains(document.activeElement)&&document.activeElement!==document.body)return;
+  fr.puestos.value=fmt(r.puestos);fr.valor.value=fmt(r.valor);fr.premio.value=fmt(r.premio);
+  fr.fecha.value=r.fecha;fr.loteria.value=r.loteria;fr.lugar.value=r.lugar;fr.responsable.value=r.responsable;fr.numero.value=r.numero;fr.numero.dispatchEvent(new Event('input'));fr.ganador.value=r.ganador;fr.medio.value=r.medio;
+  rifaPrev();
+}
+
+const boleta=n=>String(n||'').slice(-2);
+const loteriaNom=r=>(r.loteria||'').replace(/\s*\([^)]*\)\s*/g,' ').trim();
+const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function fechaLarga(d){const [y,m,dd]=d.split('-').map(Number);return `${dd} de ${MES[m-1]} de ${y}`}
+/* ---------- Imagen para compartir (PNG) ---------- */
+const FOOT_LUGAR='Placa Huella Piedra Parada',FOOT_RESP='Marcotulio Martínez';
+const GOLD='#e5b53c',MUT='#98a0a6',LN='#2e353b';
+const hoyTxt=()=>fechaLarga(today());
+const cargarH2C=()=>typeof html2canvas!=='undefined'?Promise.resolve():loadJS('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+function descargar(blob,name){
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+// Siempre IMAGEN: menú nativo de compartir con el archivo PNG; si no se puede, descarga el .png
+async function compartirImagen(html,name,caption){
+  const v=$('#voucher');v.innerHTML=html;
+  let blob;
+  try{
+    await cargarH2C();
+    const c=await html2canvas(v,{backgroundColor:'#12181f',scale:2,useCORS:true,logging:false,
+      onclone:d=>{const e=d.getElementById('voucher');if(e){e.style.left='0';e.style.top='0'}}});
+    blob=await new Promise(ok=>c.toBlob(ok,'image/png'));
+    if(!blob)throw 0;
+  }catch(e){alert('No se pudo generar la imagen. Revisa tu conexión e inténtalo de nuevo.');return}
+  const file=new File([blob],name,{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:caption});return}
+    catch(e){if(e.name==='AbortError')return}
+  }
+  descargar(blob,name);
+  alert('Imagen descargada. Ábrela desde tu galería y compártela por WhatsApp.');
+}
+const ICON=`<svg width="38" height="38" viewBox="0 0 64 64" style="flex:none"><rect x="2" y="2" width="60" height="60" rx="12" fill="#12181f" stroke="#e5b53c" stroke-width="3"/><rect x="10" y="26" width="44" height="12" fill="#e5b53c"/><path d="M10 44h44M10 20h44" stroke="#98a0a6" stroke-width="3"/></svg>`;
+const cardHead=(titulo,modo)=>`<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">${ICON}
+  <div><div style="color:${GOLD};font-size:11px;letter-spacing:2px;font-weight:700">RENDICIÓN DE CUENTAS</div>
+  <h3 style="font-size:1.35rem;line-height:1.2;margin:2px 0 0">${esc(titulo)}</h3></div></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;color:${MUT};font-size:13px;padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid ${GOLD}"><span>Corte al ${esc(hoyTxt())}</span><span style="color:${GOLD};font-size:11px;font-weight:700;letter-spacing:1.5px">${esc(modo)}</span></div>`;
+const cardFoot=r=>`<div style="margin-top:18px;padding-top:10px;border-top:2px solid ${GOLD};color:${MUT};font-size:11px;text-align:center;white-space:nowrap">${esc((r&&r.lugar)||FOOT_LUGAR)} • Responsable: ${esc((r&&r.responsable)||FOOT_RESP)}</div>`;
+const totBox=t=>`<div style="margin-top:16px;padding:14px;border-radius:10px;background:#1d2226;border:1px solid ${GOLD};text-align:right">
+  <div style="color:${MUT};font-size:13px">${esc(t[0])}</div>
+  <div style="color:${t[2]?'#e0776a':GOLD};font-size:2rem;font-weight:700;font-family:Rockwell,'Roboto Slab',serif">${esc(t[1])}</div></div>`;
+const lineas=a=>(a||[]).map(([x,y])=>`<div class="l"><span style="color:${MUT}">${esc(x)}</span><b style="text-align:right">${esc(y)}</b></div>`).join('');
+const vl=(a,b)=>b?`<div class="l"><span style="color:${MUT}">${a}</span><b style="text-align:right;max-width:62%">${esc(b)}</b></div>`:'';
+const sorteoTxt=r=>[r.fecha?fechaLarga(r.fecha):'',r.loteria].filter(Boolean).join(' - ');
+
+// Anuncio oficial del ganador (imagen)
+function compartirGanador(){
+  const r=rifaGet();
+  if(!r.numero&&!r.ganador){alert('Primero escribe el número ganador y el nombre del ganador(a) en el formulario, y toca "Guardar rifa".');return}
+  const num=String(r.numero||''),bol=boleta(num),sorteo=loteriaNom(r)||'Lotería de Santander';
+  const nBox=num?`<div style="color:${MUT};font-size:13px">Número oficial de la Lotería</div>
+    <div style="margin:6px 0 4px;font-size:3.4rem;line-height:1.1;font-weight:700;letter-spacing:4px;font-family:Rockwell,'Roboto Slab',serif;color:#e9e6df">${esc(num.slice(0,-2))}<span style="display:inline-block;margin-left:4px;padding:0 10px;border-radius:10px;background:${GOLD};color:#1a1405">${esc(bol)}</span></div>
+    <div style="color:${GOLD};font-size:14px;font-weight:700;margin-bottom:14px">Jugó con las dos últimas cifras (${esc(bol)})</div>`:'';
+  return compartirImagen(`<div style="color:${GOLD};font-size:11px;letter-spacing:2px;font-weight:700;text-align:center">RENDICIÓN DE CUENTAS · RIFA COMUNITARIA</div>
+  <div style="color:${MUT};font-size:13px;text-align:center;padding-bottom:8px;margin-bottom:10px;border-bottom:1px solid ${GOLD}">Corte al ${esc(hoyTxt())}</div>
+  <div style="text-align:center">
+    <div style="font-size:42px;line-height:1">🏆</div>
+    <h3 style="font-size:1.7rem;color:${GOLD};margin:8px 0 14px;letter-spacing:.5px">¡TENEMOS GANADOR(A)!</h3>
+    ${nBox}
+    ${r.ganador?`<div style="color:${MUT};font-size:13px">Ganador(a)</div><div style="font-size:1.6rem;font-weight:700;margin-bottom:14px">${esc(r.ganador)}</div>`:''}
+  </div>
+  ${vl('Sorteo',sorteo)}${vl('Medio de pago / Entrega',r.medio)}${vl('Fecha del sorteo',r.fecha?fechaLarga(r.fecha):'')}
+  ${totBox(['Premio entregado',money(r.premio)])}${cardFoot(r)}`,'rifa-ganador-placa-huella.png','¡Tenemos ganador(a)! – Placa Huella');
+}
+
+/* ---------- Render ---------- */
+function stockMap(){
+  const m={};
+  const key=r=>r.mat==='otros'?'otros|'+r.nombre.toLowerCase()+'|'+r.unidad.toLowerCase():r.mat;
+  const get=r=>m[key(r)]||(m[key(r)]={mat:r.mat,nombre:r.nombre,unidad:r.unidad,rec:0,gas:0,alc:0,fed:0});
+  S.entradas.forEach(r=>{const o=get(r);o.rec+=r.cant;if(r.fuente.startsWith('Alc'))o.alc+=r.cant;else o.fed+=r.cant});
+  S.consumos.forEach(r=>get(r).gas+=r.cant);
+  return m;
+}
+const n2=x=>Math.round(x*100)/100;
+
+function render(){
+  normAll();
+  // Finanzas
+  const rec=S.aportes.reduce((a,x)=>a+x.abon,0),pag=S.pagos.reduce((a,x)=>a+x.valor,0);
+  const proy=S.aportes.reduce((a,x)=>a+x.proy,0);
+  const rifa=rifaNet(),disp=rec+rifa;
+  $('#saldo').textContent=moneyS(disp-pag);
+  $('#tRec').textContent=money(rec);$('#tRifa').textContent=moneyS(rifa);$('#tPag').textContent=money(pag);
+  $('#tPend').textContent=money(S.aportes.reduce((t,x)=>t+Math.max(0,x.proy-x.abon),0));
+  const pc=disp>0?Math.min(100,pag/disp*100):0;
+  $('#barra').style.width=pc+'%';
+  $('#barraTxt').textContent=`Se ha pagado el ${Math.round(pc)}% de lo recolectado (aportes + rifa).`;
+
+  rifaFill();
+
+  // Inventario
+  const sm=stockMap();
+  const card=(k)=>{const o=sm[k]||{rec:0,gas:0,alc:0,fed:0};
+    return `<div class="card mat"><b>${MATS[k].tot}</b><span class="stock">${n2(o.rec-o.gas)}</span>
+    <span class="mu">Recibido ${n2(o.rec)} (Alcaldía ${n2(o.alc)}, Federación ${n2(o.fed)}) · Gastado ${n2(o.gas)}</span></div>`};
+  const otros=Object.values(sm).filter(o=>o.mat==='otros');
+  $('#inv').innerHTML=['cemento','hierro','arena','triturado'].map(card).join('')+
+    (otros.length?`<div class="card"><b>Otros materiales</b>${otros.map(o=>`<div class="row"><div>${esc(o.nombre)}<span class="mu"> · recibido ${n2(o.rec)}, gastado ${n2(o.gas)}</span></div><div class="num"><b>${n2(o.rec-o.gas)} ${esc(o.unidad)}</b></div></div>`).join('')}</div>`:'');
+
+  // Listas
+  const empty=t=>`<p class="mu">${t}</p>`;
+  $('#l-aportes').innerHTML=S.aportes.length?S.aportes.map(a=>{const pend=Math.max(0,a.proy-a.abon);return `<div class="row"><div><b>${esc(a.nombre)}<span class="tag ${tagCls(a.estado)}">${a.estado}</span></b>
+    <span class="mu">Abonado ${money(a.abon)} de ${money(a.proy)}</span>
+    <b style="color:${pend?'var(--bad)':'var(--ok)'}">Falta / Pendiente: ${money(pend)}</b>
+    ${a.abonos.length?`<details><summary class="mu">Historial de abonos (${a.abonos.length})</summary>${a.abonos.map(x=>`<div class="mu" style="display:flex;justify-content:space-between;align-items:center;padding:4px 0"><span>${fdate(x.fecha)} · ${money(x.valor)}</span><button class="s d" data-a="delab" data-id="${a.id}" data-ab="${x.id}">Quitar</button></div>`).join('')}</details>`:''}
+    <div class="acts"><button class="s" data-a="edit" data-id="${a.id}">Agregar abono</button><button class="s" data-a="comp" data-id="${a.id}">Comprobante</button><button class="s d" data-a="del" data-l="aportes" data-id="${a.id}">Borrar</button></div></div></div>`}).join(''):empty('Aún no hay aportes. Registra el primero arriba.');
+  const matRow=(l,r,extra)=>`<div class="row"><div><b>${matLabel(r)}</b><span class="mu">${extra} · ${fdate(r.fecha)}</span>
+    <div class="acts"><button class="s d" data-a="del" data-l="${l}" data-id="${r.id}">Borrar</button></div></div></div>`;
+  $('#l-entradas').innerHTML=S.entradas.length?S.entradas.map(r=>matRow('entradas',r,esc(r.fuente))).join(''):empty('Aún no hay materiales recibidos.');
+  $('#l-consumos').innerHTML=S.consumos.length?S.consumos.map(r=>matRow('consumos',r,esc(r.nota||'Uso en obra'))).join(''):empty('Aún no hay consumos registrados.');
+  $('#l-pagos').innerHTML=S.pagos.length?S.pagos.map(p=>`<div class="row"><div><b>${money(p.valor)}</b><span class="mu">${esc(p.avance)} · ${fdate(p.fecha)}</span>
+    <div class="acts"><button class="s d" data-a="del" data-l="pagos" data-id="${p.id}">Borrar</button></div></div></div>`).join(''):empty('Aún no hay pagos al maestro.');
+}
+
+/* ---------- Acciones de lista ---------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-a]');if(!b)return;
+  const {a,l,id,ab}=b.dataset;
+  if(a==='del'){if(confirm('¿Borrar este registro? No se puede deshacer.')){S[l]=S[l].filter(x=>x.id!==id);save()}}
+  if(a==='edit'){
+    const x=S.aportes.find(r=>r.id===id);
+    resetFa();edit.aportes=id;
+    fa.nombre.value=x.nombre;fa.proy.value=fmt(x.proy);
+    $('#lAbon').textContent='Nuevo abono (se suma al anterior)';
+    $('button.p',fa).textContent='Guardar abono';$('#canc').hidden=false;
+    prev();fa.scrollIntoView({behavior:'smooth'});fa.abon.focus();fa.abon.select();
+  }
+  if(a==='delab'&&confirm('¿Quitar este abono del historial?')){
+    const x=S.aportes.find(r=>r.id===id);x.abonos=x.abonos.filter(r=>r.id!==ab);save();
+  }
+  if(a==='comp')comprobante(S.aportes.find(r=>r.id===id));
+  if(a==='rifaganador')compartirGanador();
+  if(a==='shd')compartir('det',b.dataset.t);
+  if(a==='shr')compartir('res',b.dataset.t);
+});
+
+/* ---------- Comprobante (imagen para WhatsApp) ---------- */
+function comprobante(a){
+  const l=(x,y)=>`<div class="l"><span style="color:${MUT}">${x}</span><b style="text-align:right">${y}</b></div>`;
+  const ult=(a.abonos[a.abonos.length-1]||{}).fecha;
+  return compartirImagen(`${cardHead('Comprobante de aporte','COMPROBANTE')}
+  ${l('Aportante',esc(a.nombre))}${l('Proyectado',money(a.proy))}${l('Último abono',fdate(ult))}${l('Estado',esc(a.estado))}${l('Falta / Pendiente',money(Math.max(0,a.proy-a.abon)))}
+  ${totBox(['Total abonado',money(a.abon)])}${cardFoot(rifaGet())}`,
+  'comprobante-'+a.nombre.replace(/\W+/g,'-').toLowerCase()+'.png','Comprobante de aporte – Placa Huella');
+}
+
+/* ---------- Compartir como IMAGEN: detallado / resumido ---------- */
+const SH_TIT={resumen:'Balance General',aportes:'Aportes de Familias',entradas:'Materiales Recibidos',consumos:'Consumo en Obra',pagos:'Pagos al Maestro',rifa:'Rifa Comunitaria'};
+$$('.shbar').forEach(box=>{
+  const t=box.dataset.t,n=SH_TIT[t];
+  box.innerHTML=`<div class="mu shlbl">Compartir como imagen</div>
+  <button type="button" data-a="shd" data-t="${t}" aria-label="Compartir ${n} detallado como imagen"><span class="e">📄</span>Detallado<small>Registro por registro</small></button>
+  <button type="button" class="w" data-a="shr" data-t="${t}" aria-label="Compartir ${n} resumido como imagen"><span class="e">📊</span>Resumido<small>Tarjeta con totales</small></button>`;
+});
+
+const byFecha=a=>[...a].sort((x,y)=>(x.fecha||'').localeCompare(y.fecha||''));
+const cantTxt=r=>`${n2(r.cant)} ${r.unidad}`;
+const matNom=o=>o.mat==='otros'?`${o.nombre} (${o.unidad})`:MATS[o.mat].tot;
+const stockList=()=>{const ord=['cemento','hierro','arena','triturado','otros'];return Object.values(stockMap()).sort((a,b)=>ord.indexOf(a.mat)-ord.indexOf(b.mat))};
+// Metros lineales leídos de la descripción del avance (ej. "6 m", "12 metros", "8 ml")
+const metrosDe=s=>{const m=String(s||'').match(/(\d+(?:[.,]\d+)?)\s*(?:metros?|mts?|ml|m)(?![a-záéíóúñ])/i);return m?parseFloat(m[1].replace(',','.')):0};
+function fin(){
+  const rec=S.aportes.reduce((a,x)=>a+x.abon,0),pag=S.pagos.reduce((a,x)=>a+x.valor,0);
+  const proy=S.aportes.reduce((a,x)=>a+x.proy,0),pend=S.aportes.reduce((t,x)=>t+Math.max(0,x.proy-x.abon),0);
+  const rifa=rifaNet(),disp=rec+rifa;
+  return {rec,pag,proy,pend,rifa,disp,saldo:disp-pag,pc:disp>0?Math.min(100,pag/disp*100):0};
+}
+
+/* --- Detallado: tabla registro por registro (se dibuja como imagen) --- */
+const sub=t=>t?`<div style="color:${MUT};font-size:11px;line-height:1.3">${esc(t)}</div>`:'';
+const DET={
+  aportes(){
+    const f=fin();
+    return {titulo:SH_TIT.aportes,
+      secs:[{cols:['Familia','Abonado','Falta'],al:['left','right','right'],nw:[1,2],
+        filas:S.aportes.map((a,i)=>[
+          `<b>${i+1}. ${esc(a.nombre)}</b>${sub(a.estado+' · cuota '+money(a.proy))}${byFecha(a.abonos).map(x=>sub(fdate(x.fecha)+' · '+money(x.valor))).join('')}`,
+          money(a.abon),
+          `<span style="color:${a.proy>a.abon?'#e0776a':'#7fc08a'}">${money(Math.max(0,a.proy-a.abon))}</span>`])}],
+      tot:['Total recaudado por aportes',money(f.rec)],
+      extra:[['Proyectado',money(f.proy)],['Por cobrar',money(f.pend)]]};
+  },
+  entradas(){
+    return {titulo:SH_TIT.entradas,
+      secs:[{cols:['Fecha','Material','Cantidad'],al:['left','left','right'],nw:[0,2],
+        filas:byFecha(S.entradas).map(r=>[esc(fdate(r.fecha)),`<b>${esc(r.nombre)}</b>${sub(r.fuente)}`,esc(cantTxt(r))])},
+        {h:'TOTAL RECIBIDO POR MATERIAL',cols:['Material','Total'],al:['left','right'],nw:[1],
+        filas:stockList().filter(o=>o.rec>0).map(o=>[esc(matNom(o)),String(n2(o.rec))])}],
+      tot:['Entradas registradas',String(S.entradas.length)]};
+  },
+  consumos(){
+    return {titulo:SH_TIT.consumos,
+      secs:[{cols:['Fecha','Material','Cantidad'],al:['left','left','right'],nw:[0,2],
+        filas:byFecha(S.consumos).map(r=>[esc(fdate(r.fecha)),`<b>${esc(r.nombre)}</b>${sub(r.nota)}`,esc(cantTxt(r))])},
+        {h:'TOTAL CONSUMIDO POR MATERIAL',cols:['Material','Total'],al:['left','right'],nw:[1],
+        filas:stockList().filter(o=>o.gas>0).map(o=>[esc(matNom(o)),String(n2(o.gas))])}],
+      tot:['Consumos registrados',String(S.consumos.length)]};
+  },
+  pagos(){
+    const f=fin();
+    return {titulo:SH_TIT.pagos,
+      secs:[{cols:['Fecha','Avance','Valor'],al:['left','left','right'],nw:[0,2],
+        filas:byFecha(S.pagos).map(p=>[esc(fdate(p.fecha)),esc(p.avance),money(p.valor)])}],
+      tot:['Total pagado al maestro',money(f.pag)],
+      extra:[['Pagos realizados',String(S.pagos.length)]]};
+  },
+  resumen(){
+    const f=fin(),r=rifaGet(),inv=stockList();
+    const ing=S.aportes.filter(a=>a.abon>0).map(a=>[esc(a.nombre),money(a.abon)]);
+    if(r.saved)ing.push(['<b>Ganancia de la rifa</b>',moneyS(f.rifa)]);
+    const egr=byFecha(S.pagos).map(p=>[`${esc(p.avance)}${sub(fdate(p.fecha))}`,money(p.valor)]);
+    const secs=[
+      {h:'INGRESOS',cols:['Concepto','Valor'],al:['left','right'],nw:[1],filas:ing,tot:['Total ingresos',moneyS(f.disp)]},
+      {h:'EGRESOS',cols:['Pago al maestro','Valor'],al:['left','right'],nw:[1],filas:egr,tot:['Total egresos',money(f.pag)]}];
+    if(inv.length)secs.push({h:'INVENTARIO EN OBRA',cols:['Material','Disponible'],al:['left','right'],nw:[1],
+      filas:inv.map(o=>[esc(matNom(o)),String(n2(o.rec-o.gas))])});
+    return {titulo:SH_TIT.resumen,secs,tot:['Saldo disponible',moneyS(f.saldo),f.saldo<0],extra:[['Por cobrar a familias',money(f.pend)]]};
+  },
+  rifa(){
+    const r=rifaGet(),neto=rifaNet();
+    const fila=(a,b)=>b?[`<span style="color:${MUT}">${esc(a)}</span>`,`<b>${esc(b)}</b>`]:null;
+    return {titulo:SH_TIT.rifa,
+      secs:[{cols:['Concepto','Dato'],al:['left','right'],nw:[],filas:[
+        fila('Puestos',fmt(r.puestos)+' × '+money(r.valor)),fila('Recaudo total',money(rifaRec(r))),fila('Premio',money(r.premio)),
+        fila('Fecha del sorteo',r.fecha?fechaLarga(r.fecha):''),fila('Lotería',loteriaNom(r)),
+        fila('Número ganador',r.numero?r.numero+' (boleta '+boleta(r.numero)+')':''),fila('Ganador(a)',r.ganador),
+        fila('Pago del premio',r.medio),fila('Lugar / Proyecto',r.lugar),fila('Responsable',r.responsable)].filter(Boolean)}],
+      tot:['Total para la placa huella',moneyS(neto),neto<0]};
+  }
+};
+
+/* --- Resumido: tarjeta ejecutiva con totales --- */
+const RES={
+  aportes(){
+    const f=fin(),pers=S.aportes.filter(a=>a.abon>0).length;
+    return {titulo:SH_TIT.aportes,filas:[
+      ['Personas que han aportado',String(pers)],['Aporte promedio',money(pers?f.rec/pers:0)],
+      ['Familias registradas',String(S.aportes.length)],['Por cobrar',money(f.pend)]],
+      tot:['Total recaudado por aportes',money(f.rec)]};
+  },
+  entradas(){
+    return {titulo:SH_TIT.entradas,
+      filas:stockList().filter(o=>o.rec>0).map(o=>[matNom(o),`Recibido ${n2(o.rec)} · Disponible ${n2(o.rec-o.gas)}`]),
+      tot:['Entradas registradas',String(S.entradas.length)]};
+  },
+  consumos(){
+    return {titulo:SH_TIT.consumos,
+      filas:stockList().filter(o=>o.gas>0||o.rec>0).map(o=>[matNom(o),`Consumido ${n2(o.gas)} · Disponible ${n2(o.rec-o.gas)}`]),
+      tot:['Consumos registrados',String(S.consumos.length)]};
+  },
+  pagos(){
+    const f=fin(),m=S.pagos.reduce((t,p)=>t+metrosDe(p.avance),0),ult=byFecha(S.pagos).slice(-1)[0];
+    const filas=[['Pagos realizados',String(S.pagos.length)],['Metros lineales registrados',m?n2(m)+' m':'Sin metros en las descripciones']];
+    if(m>0&&f.pag>0)filas.push(['Pagado por metro lineal',money(f.pag/m)]);
+    if(ult)filas.push(['Último avance',ult.avance]);
+    return {titulo:SH_TIT.pagos,filas,tot:['Total pagado en mano de obra',money(f.pag)]};
+  },
+  resumen(){
+    const f=fin(),filas=[['Total recolectado',moneyS(f.disp)],['Total gastado',money(f.pag)],['% de avance (pagado / recolectado)',Math.round(f.pc)+'%']];
+    if(f.pend>0)filas.push(['Por cobrar a familias',money(f.pend)]);
+    return {titulo:SH_TIT.resumen,filas,tot:['Saldo actual',moneyS(f.saldo),f.saldo<0],barra:f.pc};
+  },
+  rifa(){
+    const r=rifaGet(),neto=rifaNet();
+    return {titulo:SH_TIT.rifa,
+      filas:[['Recaudo total',money(rifaRec(r))],['Puestos',fmt(r.puestos)+' × '+money(r.valor)],['Premio',money(r.premio)],['Sorteo',sorteoTxt(r)]].filter(x=>x[1]),
+      tot:['Total para la placa huella',moneyS(neto),neto<0]};
+  }
+};
+
+const tarjeta=o=>`${cardHead(o.titulo,'RESUMIDO')}
+  ${o.filas.map(([a,b])=>`<div class="l"><span style="color:${MUT}">${esc(a)}</span><b style="text-align:right;max-width:58%">${esc(b)}</b></div>`).join('')}
+  ${o.barra!=null?`<div style="height:16px;border-radius:4px;background:${LN};overflow:hidden;margin:14px 0 2px"><div style="width:${Math.round(o.barra)}%;height:100%;background:${GOLD}"></div></div>`:''}
+  ${o.tot?totBox(o.tot):''}
+  ${cardFoot(rifaGet())}`;
+
+function tabla(s){
+  const al=s.al||[],nw=s.nw||[];
+  const th=s.cols?`<tr>${s.cols.map((c,i)=>`<th style="text-align:${al[i]||'left'};color:${GOLD};font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:6px;border-bottom:2px solid ${GOLD}">${esc(c)}</th>`).join('')}</tr>`:'';
+  const tr=s.filas.length?s.filas.map((f,k)=>`<tr style="background:${k%2?'#171e26':'transparent'}">${f.map((c,i)=>`<td style="text-align:${al[i]||'left'};padding:9px 6px;border-bottom:1px solid ${LN};vertical-align:top;font-size:13px;line-height:1.35;${nw.includes(i)?'white-space:nowrap;':''}${al[i]==='right'?'font-weight:700;':''}">${c}</td>`).join('')}</tr>`).join('')
+    :`<tr><td colspan="${(s.cols||[1]).length}" style="padding:10px 6px;color:${MUT};font-size:13px">Sin registros</td></tr>`;
+  return `${s.h?`<div style="margin:18px 0 6px;color:${GOLD};font-weight:700;font-size:12px;letter-spacing:1.5px">${esc(s.h)}</div>`:''}
+  <table style="width:100%;border-collapse:collapse">${th}${tr}</table>
+  ${s.tot?`<div style="display:flex;justify-content:space-between;gap:10px;padding:10px 6px 0;font-weight:700;font-size:14px"><span>${esc(s.tot[0])}</span><span style="color:${GOLD}">${esc(s.tot[1])}</span></div>`:''}`;
+}
+const tarjetaDet=o=>`${cardHead(o.titulo,'DETALLADO')}
+  ${o.secs.map(tabla).join('')}
+  ${o.tot?totBox(o.tot):''}
+  ${lineas(o.extra)}
+  ${cardFoot(rifaGet())}`;
+
+function compartir(modo,t){
+  const lista={aportes:S.aportes,entradas:S.entradas,consumos:S.consumos,pagos:S.pagos}[t];
+  if(lista&&!lista.length){alert('Aún no hay registros para compartir en esta pestaña.');return}
+  if(t==='rifa'&&!rifaGet().saved){alert('Primero completa los datos y toca "Guardar rifa" para poder compartirla.');return}
+  const det=modo==='det',o=(det?DET:RES)[t]();
+  return compartirImagen(det?tarjetaDet(o):tarjeta(o),`placa-huella-${t}-${det?'detallado':'resumido'}-${today()}.png`,o.titulo+' – Placa Huella');
+}
+
+/* ---------- Copia de datos ---------- */
+$('#exportar').onclick=()=>{
+  const l=document.createElement('a');
+  l.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));
+  l.download='placa-huella-'+today()+'.json';l.click();
+};
+$('#importar').onclick=()=>$('#file').click();
+$('#file').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  f.text().then(t=>{
+    try{const d=JSON.parse(t);if(!confirm('Esto reemplaza los datos actuales. ¿Continuar?'))return;
+      S=Object.assign({aportes:[],entradas:[],consumos:[],pagos:[],rifa:{}},d);save()}
+    catch(x){alert('El archivo no es una copia válida.')}
+  });
+};
+
+/* ---------- Firebase (opcional) ---------- */
+function loadJS(src){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
+async function initFirebase(){
+  if(!FIREBASE_CONFIG)return;
+  try{
+    const v='10.12.2',b=`https://www.gstatic.com/firebasejs/${v}/firebase-`;
+    await loadJS(b+'app-compat.js');await loadJS(b+'firestore-compat.js');
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const db=firebase.firestore();
+    db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+    ref=db.collection('placa').doc('estado');
+    ref.onSnapshot(s=>{
+      $('#sync').textContent=navigator.onLine?'Sincronizado':'Sin conexión';
+      if(s.exists&&!s.metadata.hasPendingWrites){
+        try{S=Object.assign({aportes:[],entradas:[],consumos:[],pagos:[],rifa:{}},JSON.parse(s.data().d));localStorage.setItem(KEY,JSON.stringify(S));render()}catch(e){}
+      }
+    });
+  }catch(e){$('#sync').textContent='Solo local'}
+}
+
+/* ---------- PWA ---------- */
+(function(){
+  const icon="data:image/svg+xml,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='#14171a'/><rect x='8' y='26' width='48' height='12' fill='#e5b53c'/><path d='M8 44h48M8 20h48' stroke='#98a0a6' stroke-width='3'/></svg>");
+  const man={name:'Placa Huella',short_name:'Placa Huella',display:'standalone',background_color:'#14171a',theme_color:'#14171a',start_url:location.pathname,icons:[{src:icon,sizes:'any',type:'image/svg+xml',purpose:'any'}]};
+  const l=document.createElement('link');l.rel='manifest';
+  l.href=URL.createObjectURL(new Blob([JSON.stringify(man)],{type:'application/manifest+json'}));
+  document.head.appendChild(l);
+  if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
+addEventListener('online',()=>$('#sync').textContent=ref?'Sincronizado':'Local');
+addEventListener('offline',()=>$('#sync').textContent='Sin conexión');
+
+render();initFirebase();
+</script>
+</body>
+</html>
