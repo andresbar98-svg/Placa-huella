@@ -445,24 +445,41 @@ $$('nav button').forEach(b=>b.onclick=()=>{
 function matFields(box){
   box.innerHTML=`<label>Material</label>
   <select name="mat">${Object.entries(MATS).map(([k,v])=>`<option value="${k}">${v.n}</option>`).join('')}</select>
+  <div class="refh" hidden><label>Referencia / Diámetro</label>
+    <select name="refH"><option value="">Selecciona la referencia…</option><option value="Varilla 7 mm">Varilla 7 mm (para flejes)</option><option value="Varilla 9 mm">Varilla 9 mm (normal / estructural)</option><option value="__otro">Otro diámetro…</option></select>
+    <input name="refOtro" placeholder="Ej. 1/2&quot;, 3/8&quot;, 12 mm" hidden></div>
   <div class="otro" hidden><label>Nombre del material</label><input name="otroN" placeholder="Ej. Malla electrosoldada"></div>
   <div class="g2"><div><label>Cantidad</label><input name="cant" type="number" min="0" step="any" inputmode="decimal" required></div>
   <div><label>Unidad</label><select name="unidad"></select><input name="unidadOtra" placeholder="Ej. rollos" hidden></div></div>`;
   const m=$('[name=mat]',box),u=$('[name=unidad]',box),uo=$('[name=unidadOtra]',box),o=$('.otro',box);
+  const rh=$('.refh',box),rs=$('[name=refH]',box),ro=$('[name=refOtro]',box);
   const upd=()=>{
     const otros=m.value==='otros';
     o.hidden=!otros;uo.hidden=!otros;u.hidden=otros;
     u.innerHTML=otros?'':MATS[m.value].u.map(x=>`<option>${x}</option>`).join('');
     uo.required=otros;$('[name=otroN]',box).required=otros;
+    const hier=m.value==='hierro';            // Hierro / Varilla: referencia obligatoria
+    rh.hidden=!hier;rs.required=hier;
+    const otroD=hier&&rs.value==='__otro';
+    ro.hidden=!otroD;ro.required=otroD;
   };
-  m.onchange=upd;upd();
+  m.onchange=upd;rs.onchange=upd;upd();
 }
 $$('.matf').forEach(matFields);
 
+// Normaliza la referencia del hierro: "9mm" -> "Varilla 9 mm", '1/2"' -> 'Varilla 1/2"'
+function normRef(t){
+  t=String(t||'').trim().replace(/\s+/g,' ');if(!t)return '';
+  t=t.replace(/(\d)\s*mm\b/i,'$1 mm');
+  return /^varilla\b/i.test(t)?'Varilla'+t.slice(7):'Varilla '+t;
+}
+const refForm=d=>d.mat==='hierro'?normRef(d.refH==='__otro'?d.refOtro:d.refH):'';
+const hierroNom=ref=>'Hierro · '+ref;
 function readMat(f){
   const d=Object.fromEntries(new FormData(f));
   const otros=d.mat==='otros';
-  return {mat:d.mat,nombre:otros?d.otroN.trim():MATS[d.mat].n,unidad:otros?d.unidadOtra.trim():d.unidad,cant:parseFloat(d.cant)||0,fecha:d.fecha||today()};
+  const ref=refForm(d);
+  return {mat:d.mat,nombre:otros?d.otroN.trim():(ref?hierroNom(ref):MATS[d.mat].n),...(ref?{ref}:{}),unidad:otros?d.unidadOtra.trim():d.unidad,cant:parseFloat(d.cant)||0,fecha:d.fecha||today()};
 }
 const matLabel=r=>`${r.cant} ${esc(r.unidad)} de ${esc(r.nombre)}`;
 
@@ -494,6 +511,7 @@ bindForm('#f-consumo','consumos',f=>{const fd=new FormData(f);return{...readMat(
 // Clave de material igual a la de stockMap() (para "Otros" usa nombre + unidad)
 function consumoKey(f){
   const m=$('[name=mat]',f).value;
+  if(m==='hierro'){const d=Object.fromEntries(new FormData(f));return 'hierro|'+(refForm(d)||'?').toLowerCase()}   // '?' = aún sin elegir referencia
   if(m!=='otros')return m;
   return 'otros|'+$('[name=otroN]',f).value.trim().toLowerCase()+'|'+$('[name=unidadOtra]',f).value.trim().toLowerCase();
 }
@@ -700,8 +718,8 @@ const lugN=l=>String(l||'').trim()||'Sin lugar registrado';
 const lugK=l=>lugN(l).toLowerCase();
 function stockMap(){
   const m={};
-  const key=r=>r.mat==='otros'?'otros|'+r.nombre.toLowerCase()+'|'+r.unidad.toLowerCase():r.mat;
-  const get=r=>m[key(r)]||(m[key(r)]={mat:r.mat,nombre:r.nombre,unidad:r.unidad,rec:0,gas:0,alc:0,fed:0,lug:{},gasSin:0});
+  const key=r=>r.mat==='otros'?'otros|'+r.nombre.toLowerCase()+'|'+r.unidad.toLowerCase():(r.mat==='hierro'?'hierro|'+(r.ref||'').toLowerCase():r.mat);
+  const get=r=>m[key(r)]||(m[key(r)]={mat:r.mat,nombre:r.nombre,ref:r.ref||'',unidad:r.unidad,rec:0,gas:0,alc:0,fed:0,lug:{},gasSin:0});
   const slot=(o,l)=>o.lug[lugK(l)]||(o.lug[lugK(l)]={n:lugN(l),rec:0,gas:0});
   S.entradas.forEach(r=>{const o=get(r);o.rec+=r.cant;if(r.fuente.startsWith('Alc'))o.alc+=r.cant;else o.fed+=r.cant;slot(o,r.lugar).rec+=r.cant});
   S.consumos.forEach(r=>{const o=get(r);o.gas+=r.cant;if(String(r.lugar||'').trim())slot(o,r.lugar).gas+=r.cant;else o.gasSin+=r.cant});
@@ -715,7 +733,7 @@ const lugRows=o=>{
 };
 const lugAbiertos=new Set();   // conserva los desgloses abiertos cuando la app se vuelve a dibujar
 document.addEventListener('toggle',e=>{const d=e.target;if(d.matches&&d.matches('details.lug')){d.open?lugAbiertos.add(d.dataset.k):lugAbiertos.delete(d.dataset.k)}},true);
-const lugHtml=o=>{const r=lugRows(o),k=o.mat==='otros'?'otros|'+o.nombre:o.mat;
+const lugHtml=o=>{const r=lugRows(o),k=o.mat==='otros'?'otros|'+o.nombre:(o.mat==='hierro'?'hierro|'+o.ref:o.mat);
   return r.length?`<details class="lug" data-k="${esc(k)}"${lugAbiertos.has(k)?' open':''}><summary>Ver desglose por lugar de acopio (${r.length})</summary>${r.map(x=>`<div><span>📍 ${esc(x.n)}</span><b>${x.d} ${esc(o.unidad||'')}</b></div>`).join('')}</details>`:''};
 const n2=x=>Math.round(x*100)/100;
 
@@ -741,11 +759,20 @@ function render(){
 
   // Inventario
   const sm=stockMap();
-  const card=(k)=>{const o=sm[k]||{rec:0,gas:0,alc:0,fed:0,lug:{},gasSin:0};
-    return `<div class="card mat"><b>${MATS[k].tot}</b><span class="stock">${n2(o.rec-o.gas)}</span>
-    <span class="mu">Total general · Recibido ${n2(o.rec)} (Alcaldía ${n2(o.alc)}, Federación ${n2(o.fed)}) · Gastado ${n2(o.gas)}</span>${lugHtml(o)}</div>`};
+  const cardT=(t,o)=>`<div class="card mat"><b>${esc(t)}</b><span class="stock">${n2(o.rec-o.gas)}</span>
+    <span class="mu">Total general · Recibido ${n2(o.rec)} (Alcaldía ${n2(o.alc)}, Federación ${n2(o.fed)}) · Gastado ${n2(o.gas)}</span>${lugHtml(o)}</div>`;
+  const card=(k)=>cardT(MATS[k].tot,sm[k]||{rec:0,gas:0,alc:0,fed:0,lug:{},gasSin:0});
+  // Hierro: una tarjeta por referencia (7 mm y 9 mm siempre visibles; otros diámetros y registros antiguos solo si existen)
+  const STD=['Varilla 7 mm','Varilla 9 mm'],H0={mat:'hierro',ref:'',unidad:'',rec:0,gas:0,alc:0,fed:0,lug:{},gasSin:0};
+  const hCards=()=>{
+    const hs=Object.values(sm).filter(o=>o.mat==='hierro');
+    const std=STD.map(r=>{const o=hs.find(x=>x.ref.toLowerCase()===r.toLowerCase());return cardT('Total '+r,o||{...H0,ref:r})});
+    const ext=hs.filter(o=>o.ref&&!STD.some(r=>r.toLowerCase()===o.ref.toLowerCase())).sort((a,b)=>a.ref.localeCompare(b.ref)).map(o=>cardT('Total '+o.ref,o));
+    const old=hs.filter(o=>!o.ref&&(o.rec||o.gas)).map(o=>cardT('Varillas sin referencia (registros anteriores)',o));
+    return std.concat(ext,old).join('');
+  };
   const otros=Object.values(sm).filter(o=>o.mat==='otros');
-  $('#inv').innerHTML=['cemento','hierro','arena','triturado'].map(card).join('')+
+  $('#inv').innerHTML=['cemento','hierro','arena','triturado'].map(k=>k==='hierro'?hCards():card(k)).join('')+
     (otros.length?`<div class="card"><b>Otros materiales</b>${otros.map(o=>`<div class="row"><div>${esc(o.nombre)}<span class="mu"> · recibido ${n2(o.rec)}, gastado ${n2(o.gas)}</span>${lugHtml(o)}</div><div class="num"><b>${n2(o.rec-o.gas)} ${esc(o.unidad)}</b></div></div>`).join('')}</div>`:'');
 
   // Listas
@@ -767,7 +794,7 @@ const lugNota=r=>{const n=String(r.nota||'').trim(),l=String(r.lugar||'').trim()
 const registrosDelDia=(lista,f)=>S[lista].filter(r=>(r.fecha||'')===f);
 /* Saldo de un acopio = (Total entradas de ese material en ese lugar) − (Total consumido de ese material en ese lugar),
    contando hasta la fecha del consumo (inclusive). Misma clave de material y de lugar que stockMap(). */
-const matKey=r=>r.mat==='otros'?'otros|'+String(r.nombre).toLowerCase()+'|'+String(r.unidad).toLowerCase():r.mat;
+const matKey=r=>r.mat==='otros'?'otros|'+String(r.nombre).toLowerCase()+'|'+String(r.unidad).toLowerCase():(r.mat==='hierro'?'hierro|'+(r.ref||'').toLowerCase():r.mat);
 function saldoAcopio(r,hasta){
   const k=matKey(r),l=lugK(r.lugar),ok=x=>!hasta||(x.fecha||'')<=hasta;
   const suma=a=>a.filter(x=>matKey(x)===k&&lugK(x.lugar)===l&&ok(x)).reduce((t,x)=>t+(x.cant||0),0);
@@ -782,18 +809,19 @@ const detalleConsumo=r=>{
 };
 function totalesDelDia(rs){   // consolida por material + unidad: Cemento 30 Bultos, Varilla 10 Unidades…
   const m={};
-  rs.forEach(r=>{const k=r.mat+'|'+String(r.unidad).toLowerCase()+(r.mat==='otros'?'|'+r.nombre.toLowerCase():'');
+  rs.forEach(r=>{const k=r.mat+'|'+String(r.unidad).toLowerCase()+(r.mat==='otros'?'|'+r.nombre.toLowerCase():'')+(r.mat==='hierro'?'|'+(r.ref||'').toLowerCase():'');
     (m[k]||(m[k]={nombre:r.nombre,unidad:r.unidad,cant:0})).cant+=r.cant});
   return Object.values(m);
 }
+const btnRef=(l,r)=>r.mat==='hierro'&&!r.ref?`<button class="s" data-a="setref" data-l="${l}" data-id="${r.id}">Asignar referencia</button>`:'';
 const HIST={
   entradas:{box:'#l-entradas',vacio:'Aún no hay materiales recibidos.',tot:'TOTAL RECIBIDO EL DÍA',
     fila:r=>`<div class="row"><div><b>${matLabel(r)}</b><span class="mu">${esc(r.fuente)}</span>
       <span class="tagl">📍 ${esc(lugN(r.lugar))}</span>
-      <div class="acts">${String(r.lugar||'').trim()?'':`<button class="s" data-a="setlug" data-id="${r.id}">Asignar lugar</button>`}<button class="s d" data-a="del" data-l="entradas" data-id="${r.id}">Borrar</button></div></div></div>`},
+      <div class="acts">${String(r.lugar||'').trim()?'':`<button class="s" data-a="setlug" data-id="${r.id}">Asignar lugar</button>`}${btnRef('entradas',r)}<button class="s d" data-a="del" data-l="entradas" data-id="${r.id}">Borrar</button></div></div></div>`},
   consumos:{box:'#l-consumos',vacio:'Aún no hay consumos registrados.',tot:'TOTAL GASTADO EL DÍA',
     fila:r=>`<div class="row"><div><b>${matLabel(r)}</b><span class="mu">${esc(r.nota||'Uso en obra')}${String(r.lugar||'').trim()?' · de 📍 '+esc(r.lugar):''}</span>${quedanTxt(r)?`<span class="tagl">${esc(quedanTxt(r))}</span>`:''}
-      <div class="acts"><button class="s d" data-a="del" data-l="consumos" data-id="${r.id}">Borrar</button></div></div></div>`}
+      <div class="acts">${btnRef('consumos',r)}<button class="s d" data-a="del" data-l="consumos" data-id="${r.id}">Borrar</button></div></div></div>`}
 };
 function renderHistorialDia(lista){
   const c=HIST[lista],box=$(c.box);
@@ -829,6 +857,11 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('[data-a]');if(!b)return;
   const {a,l,id,ab}=b.dataset;
   if(a==='del'){if(confirm('¿Borrar este registro? No se puede deshacer.')){S[l]=S[l].filter(x=>x.id!==id);save()}}
+  if(a==='setref'){
+    const v=prompt('¿Qué referencia es este hierro?\n7 = Varilla 7 mm (fleje)\n9 = Varilla 9 mm (estructural)\nO escribe otro diámetro (ej. 1/2", 12 mm)');
+    const x=(S[l]||[]).find(r=>r.id===id),t=(v||'').trim();
+    if(x&&t){const ref=normRef(t==='7'?'7 mm':t==='9'?'9 mm':t);x.ref=ref;x.nombre=hierroNom(ref);save()}
+  }
   if(a==='setlug'){const v=prompt('¿Dónde quedó guardado este material? (Ej. Bodega Comunal)');const x=S.entradas.find(r=>r.id===id);if(v&&v.trim()&&x){x.lugar=v.trim();save()}}
   if(a==='edit'){
     const x=S.aportes.find(r=>r.id===id);
@@ -871,8 +904,9 @@ $$('.shbar').forEach(box=>{
 
 const byFecha=a=>[...a].sort((x,y)=>(x.fecha||'').localeCompare(y.fecha||''));
 const cantTxt=r=>`${n2(r.cant)} ${r.unidad}`;
-const matNom=o=>o.mat==='otros'?`${o.nombre} (${o.unidad})`:MATS[o.mat].tot;
-const stockList=()=>{const ord=['cemento','hierro','arena','triturado','otros'];return Object.values(stockMap()).sort((a,b)=>ord.indexOf(a.mat)-ord.indexOf(b.mat))};
+const matNom=o=>o.mat==='otros'?`${o.nombre} (${o.unidad})`:(o.mat==='hierro'?(o.ref||'Varillas (sin referencia)'):MATS[o.mat].tot);
+const refPri=o=>o.ref==='Varilla 7 mm'?0:o.ref==='Varilla 9 mm'?1:o.ref?2:3;
+const stockList=()=>{const ord=['cemento','hierro','arena','triturado','otros'];return Object.values(stockMap()).sort((a,b)=>ord.indexOf(a.mat)-ord.indexOf(b.mat)||(a.mat==='hierro'?refPri(a)-refPri(b)||(a.ref||'').localeCompare(b.ref||''):0))};
 // Metros lineales leídos de la descripción del avance (ej. "6 m", "12 metros", "8 ml")
 const metrosDe=s=>{const m=String(s||'').match(/(\d+(?:[.,]\d+)?)\s*(?:metros?|mts?|ml|m)(?![a-záéíóúñ])/i);return m?parseFloat(m[1].replace(',','.')):0};
 function fin(){
