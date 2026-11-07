@@ -111,7 +111,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-grad
 .shbar button.pdf span{display:block;text-align:left}
 #voucher{position:fixed;left:-9999px;top:0;width:420px;background:#12181f;color:#e9e6df;padding:24px 26px;font-family:system-ui,sans-serif;border:2px solid #e5b53c;border-top:10px solid #e5b53c}
 #voucher h3{font-family:Rockwell,"Roboto Slab","Trebuchet MS",sans-serif;font-weight:700}
-#voucher .l{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #2e353b;font-size:14px}
+#voucher .l{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #2e353b;font-size:14px}
 #voucher .t{margin-top:14px;font-size:1.5rem;color:#e5b53c;font-weight:700;text-align:right}
 
 /* ===== Plantilla unificada de comprobantes · Rendición de cuentas (verde oscuro + amarillo + verde brillante) ===== */
@@ -132,7 +132,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-grad
 #voucher.v2 .tw2{border:2px solid #3ee63e;border-radius:22px;overflow:hidden;background:linear-gradient(180deg,#0b3f1e,#062812);box-shadow:0 0 0 1px rgba(62,230,62,.25),0 0 18px rgba(62,230,62,.35)}
 #voucher.v2 table{width:100%;border-collapse:collapse}
 #voucher.v2 th{background:rgba(0,0,0,.18);color:#d3e9d6;font-size:16px;letter-spacing:.5px;text-transform:uppercase;padding:11px 10px;font-weight:700;border-bottom:2px solid rgba(255,210,31,.9)}
-#voucher.v2 td{padding:13px 10px;border-bottom:1px solid rgba(62,230,62,.35);vertical-align:top;font-size:19px;line-height:1.25;color:#f3f7f1;font-weight:600}
+#voucher.v2 td{padding:13px 10px;border-bottom:1px solid rgba(62,230,62,.35);vertical-align:middle;font-size:19px;line-height:1.25;color:#f3f7f1;font-weight:600}
 #voucher.v2 td.r{font-weight:800;font-size:21px;color:#ffd21f}
 #voucher.v2 td.dv{border-left:1px solid rgba(62,230,62,.45)}
 #voucher.v2 tr.ft td{background:linear-gradient(180deg,#ffe45c,#f2b200);color:#1b2a10;font-weight:800;font-size:19px;border-bottom:0}
@@ -224,6 +224,16 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-grad
 
 #voucher.v2 .mt{display:flex;align-items:center;gap:10px}
 #voucher.v2 .th{flex:none;display:block;border-radius:8px;background-size:cover;background-position:center}
+#voucher.v2 .c2>.h2s:first-child{margin-top:0}
+
+/* Entradas: los dos banners superiores (izq. y der.) ocupan todo el ancho de su columna, con la misma altura, alineados arriba */
+#voucher.v2 .c1>.h2s:first-child,#voucher.v2 .c2>.h2s:first-child{margin-top:0}
+#voucher.v2 .c1>.h2s:first-child .ht,#voucher.v2 .c2>.h2s:first-child .ht{flex:1;min-width:0;height:60px;padding-top:4px;padding-bottom:4px;font-size:20px;line-height:1.08}
+#voucher.v2 .c1>.h2s:first-child .sl,#voucher.v2 .c2>.h2s:first-child .sl{height:60px}
+#voucher.v2.cp .c1>.h2s:first-child .ht,#voucher.v2.cp .c2>.h2s:first-child .ht{height:44px;padding-top:3px;padding-bottom:3px;font-size:14px}
+#voucher.v2.cp .c1>.h2s:first-child .sl,#voucher.v2.cp .c2>.h2s:first-child .sl{height:44px}
+#voucher.v2 td.fc{font-size:16px;white-space:nowrap}
+#voucher.v2.cp td.fc{font-size:13px}
 #voucher.v2 .hero td{padding:14px 12px;vertical-align:middle;font-size:30px}
 #voucher.v2 .hero .nm{font-size:30px}
 #voucher.v2 .hero td.r{font-size:34px}
@@ -925,8 +935,7 @@ function diaPNG(lista,f){
   const rs=registrosDelDia(lista,f);if(!rs.length)return;
   const ent=lista==='entradas';
   const detalle=ent
-    ?{h:'DETALLE Y LUGARES',cols:['Material','Lugar','Cantidad'],al:['left','left','right'],nw:[2],
-      filas:rs.map(r=>[`<div class="mt">${thumb(r.nombre,50,34,r.mat)}<div><b class="nm">${esc(r.nombre)}</b>${sub(r.fuente)}</div></div>`,esc(lugN(r.lugar)),esc(cantTxt(r))])}
+    ?{h:'DETALLE Y LUGARES',...ENT_TBL,filas:rs.map(r=>entFila(r,true))}
     :{h:'DETALLE Y LUGARES',cols:['Material','Lugar / Nota'],al:['left','left'],nw:[],
       filas:rs.map(r=>[`<b class="nm">${esc(r.nombre)}</b>${sub(cantTxt(r))}`,esc(detalleConsumo(r))])};
   const o={titulo:ent?'Materiales recibidos':'Materiales consumidos',fecha:f,
@@ -1015,12 +1024,11 @@ const DET={
   },
   entradas(){
     return {titulo:SH_TIT.entradas,
-      secs:[{cols:['Fecha','Material','Lugar','Cantidad'],al:['left','left','left','right'],nw:[0,3],
-        filas:byFecha(S.entradas).map(r=>[esc(fdate(r.fecha)),`<b class="nm">${esc(r.nombre)}</b>${sub(r.fuente)}`,esc(lugN(r.lugar)),esc(cantTxt(r))])},
-        {h:'TOTAL RECIBIDO POR MATERIAL',cols:['Material','Total'],al:['left','right'],nw:[1],
-        filas:stockList().filter(o=>o.rec>0).map(o=>[esc(matNom(o)),String(n2(o.rec))])},
-        {h:'DISPONIBLE POR LUGAR DE ACOPIO',cols:['Material','Lugar','Disponible'],al:['left','left','right'],nw:[2],
-        filas:stockList().filter(o=>o.rec>0).flatMap(o=>lugRows(o).map(x=>[esc(matNom(o)),esc(x.n),String(x.d)]))}],
+      secs:[{...ENT_TBL,col:0,h:'DETALLE DE ENTRADAS REGISTRADAS',ic:'truck',filas:byFecha(S.entradas).map(r=>entFila(r,false))},   // izquierda: banner + todo el detalle con fecha (Fecha · Material · Lugar · Cantidad)
+        {h:'DISPONIBLE POR LUGAR DE ACOPIO',col:1,cols:['Material','Lugar','Disponible'],al:['left','left','right'],nw:[2],
+        filas:stockList().filter(o=>o.rec>0).flatMap(o=>lugRows(o).map(x=>[esc(matNom(o)),esc(x.n),String(x.d)]))},   // derecha
+        {h:'TOTAL RECIBIDO POR MATERIAL',col:1,cols:['Material','Total'],al:['left','right'],nw:[1],
+        filas:stockList().filter(o=>o.rec>0).map(o=>[esc(matNom(o)),String(n2(o.rec))])}],
       tot:['Entradas registradas',String(S.entradas.length)]};
   },
   consumos(){
@@ -1112,7 +1120,7 @@ const tarjeta=o=>`${cardHead(o.titulo,'RESUMIDO')}
 function tabla(s){
   const al=s.al||[],nw=s.nw||[];
   const th=s.cols?`<tr>${s.cols.map((c,i)=>`<th style="text-align:${al[i]||'left'};color:${GOLD};font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:6px;border-bottom:2px solid ${GOLD}">${esc(c)}</th>`).join('')}</tr>`:'';
-  const tr=s.filas.length?s.filas.map((f,k)=>`<tr style="background:${k%2?'#171e26':'transparent'}">${f.map((c,i)=>`<td style="text-align:${al[i]||'left'};padding:9px 6px;border-bottom:1px solid ${LN};vertical-align:top;font-size:13px;line-height:1.35;${nw.includes(i)?'white-space:nowrap;':''}${al[i]==='right'?'font-weight:700;':''}">${c}</td>`).join('')}</tr>`).join('')
+  const tr=s.filas.length?s.filas.map((f,k)=>`<tr style="background:${k%2?'#171e26':'transparent'}">${f.map((c,i)=>`<td style="text-align:${al[i]||'left'};padding:9px 6px;border-bottom:1px solid ${LN};vertical-align:middle;font-size:13px;line-height:1.35;${nw.includes(i)?'white-space:nowrap;':''}${al[i]==='right'?'font-weight:700;':''}">${c}</td>`).join('')}</tr>`).join('')
     :`<tr><td colspan="${(s.cols||[1]).length}" style="padding:10px 6px;color:${MUT};font-size:13px">Sin registros</td></tr>`;
   return `${s.h?`<div style="margin:18px 0 6px;color:${GOLD};font-weight:700;font-size:12px;letter-spacing:1.5px">${esc(s.h)}</div>`:''}
   <table style="width:100%;border-collapse:collapse">${th}${tr}</table>
@@ -1158,7 +1166,7 @@ const ICO={aportes:'coin',entradas:'truck',consumos:'brick',pagos:'wallet',resum
 const TT=t=>{const w=String(t||'').trim().split(/\s+/),l=w.pop();return `${w.length?esc(w.join(' ')):''}<em>${esc(l)}</em><div class="sw"></div>`};
 const hd2=(t,modo,fecha)=>`<div style="position:relative;display:flex;align-items:center;gap:16px">${IC_CARD}
   <div style="min-width:0;max-width:340px"><div class="k2">RENDICIÓN DE CUENTAS</div><div class="t2">${TT(t)}</div></div></div>
-  <div style="position:relative;display:flex;justify-content:space-between;align-items:center;gap:10px;margin:16px 0 4px"><div class="dp2">${ic2('cal',26,'#ffd21f')}<span>${fecha&&fechaGuiones(fecha)?esc(fechaGuiones(fecha)):esc(fechaGuiones(today()))}</span></div><div class="bd2">${ic2(MODOIC[modo]||'doc',20,'#1b2a10')}<span>${esc(modo)}</span></div></div>`;
+  <div style="position:relative;display:flex;justify-content:flex-start;align-items:center;gap:12px;margin:16px 0 4px"><div class="dp2">${ic2('cal',26,'#ffd21f')}<span>${fecha&&fechaGuiones(fecha)?esc(fechaGuiones(fecha)):esc(fechaGuiones(today()))}</span></div><div class="bd2">${ic2(MODOIC[modo]||'doc',20,'#1b2a10')}<span>${esc(modo)}</span></div></div>`;
 const tot2=(t,ic)=>`<div class="tb2"><span class="ti">${ic2(IC2P[ic]?ic:'doc',34,'#14391f')}</span><div class="tl2">${esc(t[0])}</div><div class="tv2${t[2]?' neg':''}">${esc(t[1])}</div></div>`;
 const ex2=a=>a&&a.length?`<div style="margin-top:8px">${a.map(([x,y,i])=>`<div class="xr2"><span class="xi">${i||'✦'}</span><span class="xl">${esc(x)}</span><b class="xv">${esc(y)}</b></div>`).join('')}</div>`:'';
 const foot2=()=>{const r=rifaGet();return `<div style="height:18px;flex:none"></div><div class="f2"><div class="fp" style="background-image:url(${IMG_FOOT})"></div><div class="fp fg"></div><div class="sl2">La placa huella<br>también es <b>progreso</b><div class="sw"></div></div><div class="fb2">${ic2('pin',28,'#ffd21f')}<span>${esc(r.lugar||FOOT_LUGAR)} · Responsable: ${esc(r.responsable||FOOT_RESP)}</span></div></div>`};
@@ -1197,6 +1205,15 @@ const thumb=(n,w,h,mat)=>{
     :`<span class="th" style="width:${w}px;height:${h}px;overflow:hidden">${inner}</span>`;
 };
 const heroMat=(n,mat)=>`<div class="mt">${thumb(n,92,54,mat)}<b class="nm">${esc(n)}</b></div>`;
+// ESTRUCTURA FIJA de las tablas de Entradas: Fecha (siempre a la izquierda) · Material · Lugar · Cantidad.
+// Todos los reportes de entradas usan estas dos piezas, así el orden no puede desalinearse.
+const ENT_TBL={cols:['Fecha','Material','Lugar','Cantidad'],al:['left','left','left','right'],nw:[0,3],cl:['fc','','','']};
+const entFila=(r,conFoto)=>[
+  esc(fdate(r.fecha)),
+  conFoto?`<div class="mt">${thumb(r.nombre,50,34,r.mat)}<div><b class="nm">${esc(r.nombre)}</b>${sub(r.fuente)}</div></div>`
+         :`<b class="nm">${esc(r.nombre)}</b>${sub(r.fuente)}`,
+  esc(lugN(r.lugar)),
+  esc(cantTxt(r))];
 const heroTot=(txt,unidad)=>`<div class="ht2"><span class="hv">${esc(txt)}</span>${/viaje|volquet/i.test(unidad||'')?ic2('truck',38,'#fff'):''}</div>`;
 function tabla2(s){
   const al=s.al||[],nw=s.nw||[],n=(s.cols||[1]).length;
@@ -1204,10 +1221,15 @@ function tabla2(s){
   const tr=s.filas.length?s.filas.map(f=>`<tr>${f.map((c,i)=>`<td class="${al[i]==='right'?'r':''}${i>0?' dv':''}${s.cl&&s.cl[i]?' '+s.cl[i]:''}" style="text-align:${al[i]||'left'};${nw.includes(i)?'white-space:nowrap;':''}">${c}</td>`).join('')}</tr>`).join('')
     :`<tr><td colspan="${n}" class="em">Sin registros</td></tr>`;
   const ft=s.tot?`<tr class="ft"><td colspan="${Math.max(1,n-1)}">${esc(s.tot[0])}</td>${n>1?`<td style="text-align:right;white-space:nowrap">${esc(s.tot[1])}</td>`:''}</tr>`:'';
-  return `${s.h?`<div class="h2s"><span class="hi">${ic2(icH(s.h),30,'#14391f')}</span><span class="ht">${esc(s.h)}</span><span class="sl"></span><span class="sl s2"></span></div>`:''}<div class="tw2 ${s.cls||''}" style="position:relative"><table>${th}${tr}${ft}</table></div>`;
+  return `${s.h?`<div class="h2s"><span class="hi">${ic2(s.ic||icH(s.h),30,'#14391f')}</span><span class="ht">${esc(s.h)}</span><span class="sl"></span><span class="sl s2"></span></div>`:''}<div class="tw2 ${s.cls||''}" style="position:relative"><table>${th}${tr}${ft}</table></div>`;
 }
 // Reparte las tablas en n columnas (filas divididas, encabezado repetido) para que la imagen no quede larga
 function bloques(secs,n){
+  // Reparto fijo por columnas: cada sección declara col:0 (izquierda) o col:1 (derecha); no se parten tablas.
+  if(secs.some(s=>s.col!=null)){
+    const cs=[0,1].map(i=>secs.filter(s=>(s.col||0)===i));
+    return `<div style="position:relative;display:flex;gap:18px;align-items:flex-start">${cs.filter(c=>c.length).map((c,i)=>`<div class="c${i+1}" style="flex:1;min-width:0">${c.map(tabla2).join('')}</div>`).join('')}</div>`;
+  }
   const arma=part=>{
     const bl=[];
     secs.forEach(s=>{
@@ -1242,7 +1264,7 @@ async function compartir(modo,t){
   if(!det)return compartirImagen(tarjeta2(o,ic),name,cap,'v2');
   // Detallado: 1 columna → compacto → 2 columnas → … hasta que quepa exacto en 9:16 (sin estirarse hacia abajo)
   let sel=null;
-  for(let n=(t==='aportes'&&S.aportes.length>12?2:1);n<=4&&!sel;n++)for(const cp of [false,true]){
+  for(let n=((t==='aportes'&&S.aportes.length>12)||o.secs.some(x=>x.col!=null)?2:1);n<=4&&!sel;n++)for(const cp of [false,true]){
     const W=anchoW(n);
     if(await medir(tarjetaDet2(o,ic,n),W,cp)<=W*16/9&&!desborda()){sel={n,cp,W};break}
   }
@@ -1328,8 +1350,8 @@ async function exportarPDF(){
 
   // 2) Entradas
   sec('2. Entradas (materiales recibidos)');
-  tab([{h:'Fecha',w:24},{h:'Material',w:44},{h:'Cantidad',w:28,al:'right'},{h:'Lugar de acopio',w:46},{h:'Fuente',w:40}],
-    byFecha(S.entradas).map(r=>[fdate(r.fecha),r.nombre,cantTxt(r),lugN(r.lugar),r.fuente]));
+  tab([{h:'Fecha',w:24},{h:'Material',w:44},{h:'Lugar de acopio',w:46},{h:'Cantidad',w:28,al:'right'},{h:'Fuente',w:40}],
+    byFecha(S.entradas).map(r=>[fdate(r.fecha),r.nombre,lugN(r.lugar),cantTxt(r),r.fuente]));
 
   // 3) Consumos
   sec('3. Consumos (materiales usados en obra)');
