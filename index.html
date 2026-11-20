@@ -774,7 +774,7 @@ const filaHTML=(r={})=>{
   <div class="rt"${rato?'':' hidden'}>${sel('desde',DESDE,r.desde)}${sel('hasta',HASTA,r.hasta)}</div></div>
   <button type="button" class="s d bx" data-a="bdelrow" aria-label="Quitar este trabajador">✕</button></div>`;
 };
-function bitNum(){const rs=bitRows();rs.forEach((r,i)=>{$('.bn',r).textContent=i+1;$('.bx',r).hidden=rs.length<2});avCrewRefresh()}
+function bitNum(){const rs=bitRows();rs.forEach((r,i)=>{$('.bn',r).textContent=i+1;$('.bx',r).hidden=rs.length<2});avCrewRefresh();fundRefresh()}
 function bitAddRow(r,foco){
   const box=$('#bit-rows');box.insertAdjacentHTML('beforeend',filaHTML(r||{}));bitNum();
   const row=box.lastElementChild;if(foco)$('[name=trabajador]',row).focus();return row;
@@ -824,7 +824,13 @@ function bitPick(campo,v){
 }
 document.addEventListener('change',e=>{
   const el=e.target;
-  if(el.matches&&el.matches('#bit-rows select')){const inp=el.parentElement.querySelector('input');if(inp){inp.hidden=el.value!=='__otro';if(!inp.hidden)inp.focus()}}
+  if(el.matches&&el.matches('#bit-rows select')){
+    if(el.value.startsWith('__i:')||el.value.startsWith('__e:')){const o=el.parentElement.querySelector('input');if(o)o.hidden=true;return}   // solo inicio o solo fin de un avance
+    if(el.value.startsWith('__f:')){   // bloque completo de un avance: llena Desde y Hasta juntos
+      $$('.rt select',el.closest('.brow')).forEach(x=>{x.value=el.value;const o=x.parentElement.querySelector('input');if(o)o.hidden=true});return;
+    }
+    const inp=el.parentElement.querySelector('input');if(inp){inp.hidden=el.value!=='__otro';if(!inp.hidden)inp.focus()}
+  }
 });
 $('#bitAdd').onclick=()=>bitAddRow({},true);
 $('.cxb',$('#f-bitacora')).onclick=bitSalir;
@@ -837,7 +843,7 @@ $('#f-bitacora').onsubmit=e=>{
     if(!t&&!o)return;
     if(!t||!o){if(!bad)bad=`Completa el trabajador y el oficio de la fila ${i+1}, o quita esa fila.`;return}
     const rato=r.dataset.t==='rato';
-    const val=n=>{const sl=$('[name='+n+']',r);return sl.value==='__otro'?limpia($('[name='+n+'Otro]',r).value):sl.value};
+    const val=n=>{const sl=$('[name='+n+']',r);if(/^__[fie]:/.test(sl.value)){const f=bitAv.find(q=>q.k===sl.value.slice(4));return f?hh(n==='desde'?f.ini:f.fin):''}return sl.value==='__otro'?limpia($('[name='+n+'Otro]',r).value):sl.value};
     const d=rato?val('desde'):'',h=rato?val('hasta'):'';
     if(rato&&(!d||!h)){if(!bad)bad=`Elige "Desde" y "Hasta" del rato en la fila ${i+1}, o marca Día completo.`;return}
     out.push({id:r.dataset.id||'',trabajador:t,oficio:o,tiempo:rato?'rato':'dia',desde:d,hasta:h});
@@ -947,6 +953,45 @@ const sigSub=(id,et)=>{
   return pre+' '+(mx+1);
 };
 const bitWorkers=()=>{const m=new Map();bitRows().forEach(r=>{const t=limpia($('[name=trabajador]',r).value);if(t&&!m.has(cmpKey(t)))m.set(cmpKey(t),t)});return [...m.values()]};
+// Avances del día (Amarre y Fundida) con horario completo: opciones rápidas en Desde/Hasta de un "Rato"
+// Fichas: __f:k = bloque completo (llena Desde y Hasta) · __i:k = solo el inicio · __e:k = solo el fin
+const TOK=/^__[fie]:/;
+function fundDia(){return bitAv.filter(r=>r.ini&&r.fin&&minDe(r.ini,r.fin)>0)}
+function fundNom(r){return `${ETAPAS[r.etapa].ic} ${limpia(r.sub)||ETAPAS[r.etapa].s}${TR().length>1?' · '+trNom(r.tramo):''}`}
+function fundRefresh(){
+  const fs=fundDia();
+  const tokOk=v=>fs.some(f=>v==='__f:'+f.k||v==='__i:'+f.k||v==='__e:'+f.k);
+  const hide=sl=>{const i=sl.parentElement.querySelector('input');if(i)i.hidden=true};
+  bitRows().forEach(row=>{
+    const ss=$$('.rt select',row);
+    ss.forEach(sl=>{
+      const cur=sl.value,esDesde=sl.name==='desde';
+      $$('optgroup[data-fg]',sl).forEach(o=>o.remove());
+      const otra=$('option[value="__otro"]',sl);
+      if(fs.length){
+        const g=document.createElement('optgroup');g.dataset.fg='1';g.label='Horarios de la jornada';
+        const add=(v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;g.appendChild(o)};
+        fs.forEach(f=>add('__f:'+f.k,`${fundNom(f)}: ${hh(f.ini)} - ${hh(f.fin)}`));
+        fs.forEach(f=>esDesde?add('__i:'+f.k,`▶ Inicio de ${fundNom(f)} · ${hh(f.ini)}`):add('__e:'+f.k,`⏹ Fin de ${fundNom(f)} · ${hh(f.fin)}`));
+        sl.insertBefore(g,otra);
+      }
+      if(TOK.test(cur)){if(tokOk(cur))sl.value=cur;else{sl.value='';hide(sl)}}   // si la fundida/avance ya no existe, se limpia
+    });
+    // Rato guardado cuyo horario coincide con los avances: se vuelve a enlazar
+    if(ss.length===2){
+      const rd=sl=>sl.value==='__otro'?limpia(sl.parentElement.querySelector('input').value):sl.value;
+      if(!TOK.test(ss[0].value)&&!TOK.test(ss[1].value)){
+        const d=rd(ss[0]),h=rd(ss[1]),bl=d&&h&&fs.find(q=>hh(q.ini)===d&&hh(q.fin)===h);
+        if(bl)ss.forEach(sl=>{sl.value='__f:'+bl.k;hide(sl)});
+        else{
+          const fi=d&&fs.find(q=>hh(q.ini)===d),ff=h&&fs.find(q=>hh(q.fin)===h);
+          if(fi){ss[0].value='__i:'+fi.k;hide(ss[0])}
+          if(ff){ss[1].value='__e:'+ff.k;hide(ss[1])}
+        }
+      }
+    }
+  });
+}
 function avSelect(){
   const sel=$('#bitTramo');if(!sel)return;
   if(!TR().some(t=>t.id===bitTr))bitTr=TR()[0].id;
@@ -979,7 +1024,7 @@ function avRows(){
   $('#avAdd').textContent=bitEt==='fundida'?'＋ Agregar fundida':'＋ Agregar avance de enmallado / amarre';
   $('#avLbl').innerHTML=`${E.ic} ${esc(E.n)} · ${esc(trNom(bitTr))} <small style="color:var(--mu);font-weight:400">· metros lineales y horario de hoy</small>`;
   $$('#avEtapa [data-et]').forEach(b=>b.classList.toggle('on',b.dataset.et===bitEt));
-  avCrewRefresh();
+  avCrewRefresh();fundRefresh();
 }
 function avResumen(){
   const box=$('#avResumen');if(!box)return;
@@ -1074,7 +1119,7 @@ $('#av-rows').addEventListener('input',e=>{
   else if(i.name==='m'){i.value=i.value.replace(/[^\d.,]/g,'');x.m=i.value}
   else if(i.name==='ini'||i.name==='fin'){x[i.name]=i.value;$('[data-dur]',c).innerHTML=durHTML(x)}
   else return;
-  avResumen();
+  fundRefresh();avResumen();
 });
 $('#av-rows').addEventListener('change',e=>{
   const i=e.target;if(!(i.matches&&i.matches('input[type=checkbox][data-w]')))return;
